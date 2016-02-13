@@ -4,6 +4,7 @@ package io.egen.rentalflix;
  * Entity representing a movie. Fields: id, title, year, language
  */
 
+// Assumption: If IsRent is false, then we can rent it.
 public class Movie {
 	// POJO IMPLEMENTATION GOES HERE
 	private int id;
@@ -13,7 +14,8 @@ public class Movie {
 	private boolean isRent;
 	private String user;
 
-	Movie(int id, String title, int year, String language, boolean isRent, String user) {
+	Movie(int id, String title, int year, String language, boolean isRent,
+			String user) {
 		this.id = id;
 		this.title = title;
 		this.year = year;
@@ -76,7 +78,8 @@ public class Movie {
 		int result = 1;
 		result = prime * result + id;
 		result = prime * result + (isRent ? 1231 : 1237);
-		result = prime * result + ((language == null) ? 0 : language.hashCode());
+		result = prime * result
+				+ ((language == null) ? 0 : language.hashCode());
 		result = prime * result + ((title == null) ? 0 : title.hashCode());
 		result = prime * result + year;
 		return result;

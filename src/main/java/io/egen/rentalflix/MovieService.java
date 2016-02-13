@@ -1,10 +1,10 @@
 package io.egen.rentalflix;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service implementing IFlix interface You can use any Java collection type to
@@ -12,14 +12,14 @@ import java.util.Map;
  */
 public class MovieService implements IFlix {
 	// private static int id=1;
-	private static Map<Integer, Movie> movies = new HashMap<Integer, Movie>();
+	private static Map<Integer, Movie> movies = new ConcurrentHashMap<Integer, Movie>();
 
 	@Override
 	public List<Movie> findAll() {
 		// TODO Auto-generated method stub
 		// try changing this
 		if (movies.isEmpty())
-			return null;
+			return new ArrayList<Movie>();
 		else {
 			return new ArrayList<Movie>(movies.values());
 		}
@@ -37,14 +37,18 @@ public class MovieService implements IFlix {
 		if (movieList.isEmpty()) {
 			return movieList;
 		} else
-			return null;
+			return movieList;
 	}
 
 	@Override
 	public Movie create(Movie movie) {
 		// if movie already exists then avoid adding to the store
-		for (Map.Entry<Integer, Movie> entry : movies.entrySet()) {
-			if (!movie.equals(entry.getValue())) {
+		if (movies.isEmpty()) {
+			movies.put(movie.getId(), movie);
+		}
+		for (Iterator<Map.Entry<Integer, Movie>> entry = movies.entrySet()
+				.iterator(); entry.hasNext();) {
+			if (!movie.equals(entry.next().getValue())) {
 				movies.put(movie.getId(), movie);
 			}
 		}
@@ -55,7 +59,8 @@ public class MovieService implements IFlix {
 	}
 
 	@Override
-	public Movie update(Movie movie) throws IllegalArgumentException {
+	public synchronized Movie update(Movie movie)
+			throws IllegalArgumentException {
 		for (Map.Entry<Integer, Movie> entry : movies.entrySet()) {
 			if (movie.getId() == entry.getKey()) {
 				movies.replace(movie.getId(), entry.getValue(), movie);
@@ -71,11 +76,12 @@ public class MovieService implements IFlix {
 	}
 
 	@Override
-	public Movie delete(int id) throws IllegalArgumentException {
+	public synchronized Movie delete(int id) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		Movie deletedMovie = null;
 
-		for (Iterator<Map.Entry<Integer, Movie>> it = movies.entrySet().iterator(); it.hasNext();) {
+		for (Iterator<Map.Entry<Integer, Movie>> it = movies.entrySet()
+				.iterator(); it.hasNext();) {
 			Map.Entry<Integer, Movie> entry = it.next();
 			if (entry.getKey() == id) {
 				deletedMovie = entry.getValue();
@@ -99,19 +105,23 @@ public class MovieService implements IFlix {
 	}
 
 	@Override
-	public boolean rentMovie(int movieId, String user) throws IllegalArgumentException {
+	public boolean rentMovie(int movieId, String user) {
 		// TODO Auto-generated method stub
 		boolean isRent = false;
 		for (Map.Entry<Integer, Movie> entry : movies.entrySet()) {
 			if (movieId == entry.getKey()) {
 				isRent = entry.getValue().isRented();
+				if (isRent == false) {
+					entry.getValue().setUser(user);
+					entry.getValue().setRented(true);
+				}
 				break;
 			}
 		}
 		if (isRent == false)
 			return true;
 		else
-			throw new IllegalArgumentException();
+			return false;
 	}
 
 	private Movie ifExist(Movie movie) {
